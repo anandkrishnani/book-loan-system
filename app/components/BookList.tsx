@@ -4,9 +4,12 @@ import { useEffect, useState } from 'react';
 import { Book, BookFormData } from '../types/book';
 import { supabase, BookRow } from '../lib/supabase';
 
+const ITEMS_PER_PAGE = 10;
+
 export default function BookList() {
   const [books, setBooks] = useState<Book[]>([]);
   const [showForm, setShowForm] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState<BookFormData>({
     title: '',
@@ -14,6 +17,12 @@ export default function BookList() {
     borrowDate: new Date(),
     dueDate: new Date(new Date().setDate(new Date().getDate() + 30)),
   });
+
+  // Calculate pagination
+  const totalPages = Math.ceil(books.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const currentBooks = books.slice(startIndex, endIndex);
 
   useEffect(() => {
     fetchBooks();
@@ -138,7 +147,7 @@ export default function BookList() {
   return (
     <div className="p-6 max-w-4xl mx-auto">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-gray-800">Book Loan System</h1>
+        <h1 className="text-3xl font-bold text-gray-800">Books on Loan</h1>
         <button
           onClick={() => setShowForm(!showForm)}
           className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
@@ -200,8 +209,8 @@ export default function BookList() {
         </form>
       )}
 
-      <div className="grid gap-4">
-        {books.map((book) => (
+      <div className="grid gap-4 mb-6">
+        {currentBooks.map((book) => (
           <div
             key={book.id}
             className={`p-4 rounded-lg shadow ${
@@ -241,6 +250,37 @@ export default function BookList() {
           <p className="text-center text-gray-500">No books are currently loaned out.</p>
         )}
       </div>
+
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="flex justify-center items-center space-x-4">
+          <button
+            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+            disabled={currentPage === 1}
+            className={`px-4 py-2 rounded ${
+              currentPage === 1
+                ? 'bg-gray-300 cursor-not-allowed'
+                : 'bg-blue-500 hover:bg-blue-600 text-white'
+            }`}
+          >
+            Previous
+          </button>
+          <span className="text-gray-600">
+            Page {currentPage} of {totalPages}
+          </span>
+          <button
+            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+            disabled={currentPage === totalPages}
+            className={`px-4 py-2 rounded ${
+              currentPage === totalPages
+                ? 'bg-gray-300 cursor-not-allowed'
+                : 'bg-blue-500 hover:bg-blue-600 text-white'
+            }`}
+          >
+            Next
+          </button>
+        </div>
+      )}
     </div>
   );
 } 
